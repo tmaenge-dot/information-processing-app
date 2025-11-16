@@ -37,7 +37,7 @@ const SpeedDevelopment = () => {
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [results, setResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
-  const timerRef = useRef<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const testTexts = [
     {

@@ -223,7 +223,7 @@ Date: 22 October 2025`,
   ];
 
   useEffect(() => {
-    let interval: number;
+    let interval: ReturnType<typeof setInterval>;
     if (isExamActive && taskStartTime) {
       interval = setInterval(() => {
         const taskElapsed = (Date.now() - taskStartTime) / 1000;

@@ -992,7 +992,7 @@ FAULT FINDING & REPORTING
   }, []);
 
   useEffect(() => {
-    let interval: number;
+    let interval: ReturnType<typeof setInterval>;
     if (isTyping && startTime && selectedLesson) {
       interval = setInterval(() => {
         const elapsed = (Date.now() - startTime) / 1000;
