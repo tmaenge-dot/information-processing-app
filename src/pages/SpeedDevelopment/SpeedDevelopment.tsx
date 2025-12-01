@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { useSubscription } from '../../hooks/useSubscription';
 import { 
   Box, 
@@ -187,7 +188,9 @@ const SpeedDevelopment = () => {
               <Button 
                 variant="contained" 
                 size="small" 
-                onClick={() => window.location.href = '/information-processing-app/pricing'}
+                component={Link}
+                to="/pricing"
+                sx={{ textDecoration: 'none' }}
               >
                 Upgrade for Unlimited
               </Button>
