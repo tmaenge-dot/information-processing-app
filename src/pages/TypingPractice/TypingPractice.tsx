@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import { useSubscription } from '../../hooks/useSubscription';
 import {
   Box,
@@ -1473,7 +1472,7 @@ FAULT FINDING & REPORTING
                 {currentPlan.price === 0 ? 'Free forever' : `$${currentPlan.price}/${currentPlan.period}`}
               </Typography>
             </Box>
-            <Box display="flex" gap={2} flexWrap="wrap">
+            <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
               {currentPlan.limitations.dailyLessons !== null && (
                 <Chip 
                   label={`Lessons: ${getRemainingUsage('dailyLessons')} remaining`}
@@ -1482,15 +1481,16 @@ FAULT FINDING & REPORTING
                 />
               )}
               {currentPlan.id === 'free' && (
-                <Button 
-                  variant="contained" 
-                  size="small" 
-                  component={Link}
-                  to="/pricing"
-                  sx={{ fontWeight: 'bold', textDecoration: 'none' }}
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    fontWeight: 'bold',
+                    color: 'primary.main',
+                    fontSize: '0.9rem'
+                  }}
                 >
-                  Upgrade Now
-                </Button>
+                  👉 Visit "Pricing & Plans" to upgrade
+                </Typography>
               )}
             </Box>
           </Box>

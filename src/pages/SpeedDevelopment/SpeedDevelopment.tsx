@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import { useSubscription } from '../../hooks/useSubscription';
 import { 
   Box, 
@@ -180,20 +179,21 @@ const SpeedDevelopment = () => {
             borderColor: getRemainingUsage('speedTestsPerDay')! > 0 ? 'success.main' : 'warning.main'
           }}
         >
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
             <Typography variant="body1">
               Speed Tests Remaining Today: <strong>{getRemainingUsage('speedTestsPerDay')}</strong>
             </Typography>
             {getRemainingUsage('speedTestsPerDay') === 0 && (
-              <Button 
-                variant="contained" 
-                size="small" 
-                component={Link}
-                to="/pricing"
-                sx={{ textDecoration: 'none' }}
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  fontWeight: 'bold',
+                  color: 'primary.main',
+                  fontSize: '0.9rem'
+                }}
               >
-                Upgrade for Unlimited
-              </Button>
+                👉 Visit "Pricing & Plans" to upgrade
+              </Typography>
             )}
           </Box>
         </Paper>
