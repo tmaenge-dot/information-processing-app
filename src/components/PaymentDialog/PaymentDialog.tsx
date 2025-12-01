@@ -5,20 +5,23 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  TextField,
-  Grid,
   Box,
   Typography,
   Chip,
-  InputAdornment,
-  Alert
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import {
-  CreditCard,
   Lock,
-  CheckCircle
+  CheckCircle,
+  CreditCard
 } from '@mui/icons-material';
+import { PayPalButtons, PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { SubscriptionPlan } from '../../types/subscription';
+
+// PayPal configuration
+const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 interface PaymentDialogProps {
   open: boolean;
@@ -33,60 +36,101 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   plan, 
   onPaymentComplete 
 }) => {
-  const [formData, setFormData] = useState({
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
-    cardholderName: '',
-    email: ''
-  });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleInputChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: event.target.value
-    }));
+  // Create PayPal order
+  const createOrder = async () => {
+    if (!plan) return '';
+
+    try {
+      const response = await fetch(`${API_URL}/api/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          planId: plan.id,
+          planName: plan.name,
+          amount: plan.price
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create order');
+      }
+
+      return data.id;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create order');
+      throw err;
+    }
   };
 
-  const handlePayment = async () => {
+  // Capture PayPal order
+  const onApprove = async (data: any) => {
     if (!plan) return;
 
     setIsProcessing(true);
-    
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // In a real app, this would integrate with Stripe, PayPal, etc.
-    console.log('Processing payment for plan:', plan.id);
-    console.log('Payment details:', formData);
-    
-    // Simulate successful payment
-    onPaymentComplete(plan.id);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_URL}/api/orders/${data.orderID}/capture`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const captureData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(captureData.error || 'Failed to capture payment');
+      }
+
+      console.log('Payment captured:', captureData);
+      
+      // Mark payment as successful
+      setPaymentSuccess(true);
+      
+      // Update user's subscription
+      onPaymentComplete(plan.id);
+      
+      // Close dialog after short delay
+      setTimeout(() => {
+        onClose();
+        setPaymentSuccess(false);
+        setIsProcessing(false);
+      }, 2000);
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Payment failed');
+      setIsProcessing(false);
+    }
+  };
+
+  const onError = (err: any) => {
+    console.error('PayPal error:', err);
+    setError('Payment failed. Please try again.');
     setIsProcessing(false);
-    onClose();
-    
-    // Reset form
-    setFormData({
-      cardNumber: '',
-      expiryDate: '',
-      cvv: '',
-      cardholderName: '',
-      email: ''
-    });
   };
 
-  const formatCardNumber = (value: string) => {
-    // Add spaces every 4 digits
-    return value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
-  };
-
-  const formatExpiryDate = (value: string) => {
-    // Add slash after 2 digits
-    return value.replace(/\D/g, '').replace(/(.{2})/, '$1/');
+  const onCancel = () => {
+    console.log('Payment cancelled by user');
+    setError(null);
   };
 
   if (!plan) return null;
+
+  // PayPal initial options
+  const initialOptions = {
+    clientId: PAYPAL_CLIENT_ID,
+    currency: 'USD',
+    intent: 'capture',
+  };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -103,6 +147,35 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
       </DialogTitle>
 
       <DialogContent>
+        {/* Payment Success Message */}
+        {paymentSuccess && (
+          <Alert 
+            icon={<CheckCircle />} 
+            severity="success" 
+            sx={{ mb: 3 }}
+          >
+            <Typography variant="body1" fontWeight="bold">
+              Payment Successful! 🎉
+            </Typography>
+            <Typography variant="body2">
+              Your subscription has been activated. Redirecting...
+            </Typography>
+          </Alert>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <Alert 
+            severity="error" 
+            sx={{ mb: 3 }}
+            onClose={() => setError(null)}
+          >
+            <Typography variant="body2">
+              {error}
+            </Typography>
+          </Alert>
+        )}
+
         {/* Plan Summary */}
         <Box mb={3} p={2} bgcolor="grey.50" borderRadius={2}>
           <Typography variant="subtitle1" gutterBottom fontWeight="bold">
@@ -133,106 +206,44 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
           sx={{ mb: 3 }}
         >
           <Typography variant="body2">
-            <strong>Demo Mode:</strong> This is a simulation. No real payment will be processed. 
-            In production, this would integrate with secure payment providers like Stripe.
+            <strong>Secure Payment:</strong> Your payment is processed securely through PayPal. 
+            We never store your payment information.
           </Typography>
         </Alert>
 
-        {/* Payment Form */}
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Email Address"
-              type="email"
-              value={formData.email}
-              onChange={handleInputChange('email')}
-              required
-            />
-          </Grid>
-          
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Cardholder Name"
-              value={formData.cardholderName}
-              onChange={handleInputChange('cardholderName')}
-              required
-            />
-          </Grid>
-          
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Card Number"
-              value={formatCardNumber(formData.cardNumber)}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\s/g, '');
-                if (value.length <= 16) {
-                  setFormData(prev => ({ ...prev, cardNumber: value }));
-                }
+        {/* PayPal Buttons */}
+        {!paymentSuccess && !isProcessing && (
+          <PayPalScriptProvider options={initialOptions}>
+            <PayPalButtons
+              style={{
+                layout: 'vertical',
+                color: 'gold',
+                shape: 'rect',
+                label: 'paypal',
               }}
-              placeholder="1234 5678 9012 3456"
-              inputProps={{ maxLength: 19 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <CreditCard />
-                  </InputAdornment>
-                )
-              }}
-              required
+              createOrder={createOrder}
+              onApprove={onApprove}
+              onError={onError}
+              onCancel={onCancel}
+              disabled={isProcessing}
             />
-          </Grid>
-          
-          <Grid item xs={6}>
-            <TextField
-              fullWidth
-              label="Expiry Date"
-              value={formatExpiryDate(formData.expiryDate)}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, '');
-                if (value.length <= 4) {
-                  setFormData(prev => ({ ...prev, expiryDate: value }));
-                }
-              }}
-              placeholder="MM/YY"
-              inputProps={{ maxLength: 5 }}
-              required
-            />
-          </Grid>
-          
-          <Grid item xs={6}>
-            <TextField
-              fullWidth
-              label="CVV"
-              value={formData.cvv}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, '');
-                if (value.length <= 3) {
-                  setFormData(prev => ({ ...prev, cvv: value }));
-                }
-              }}
-              placeholder="123"
-              inputProps={{ maxLength: 3 }}
-              required
-            />
-          </Grid>
-        </Grid>
+          </PayPalScriptProvider>
+        )}
+
+        {/* Processing Indicator */}
+        {isProcessing && !paymentSuccess && (
+          <Box display="flex" flexDirection="column" alignItems="center" gap={2} py={4}>
+            <CircularProgress />
+            <Typography variant="body2" color="text.secondary">
+              Processing your payment...
+            </Typography>
+          </Box>
+        )}
       </DialogContent>
 
       <DialogActions>
         <Button onClick={onClose} disabled={isProcessing}>
           Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handlePayment}
-          disabled={isProcessing || !formData.email || !formData.cardholderName || !formData.cardNumber}
-          startIcon={isProcessing ? undefined : <CheckCircle />}
-          sx={{ minWidth: 120 }}
-        >
-          {isProcessing ? 'Processing...' : `Pay $${plan.price}`}
         </Button>
       </DialogActions>
     </Dialog>
