@@ -325,7 +325,7 @@ const EnhancedExamPractice: React.FC = () => {
     if (examStarted && !examPaused && timeRemaining > 0) {
       timer = setInterval(() => {
         setTimeRemaining(prev => prev - 1);
-      }, 1000);
+      }, 1000) as unknown as number;
     }
     return () => clearInterval(timer);
   }, [examStarted, examPaused, timeRemaining]);

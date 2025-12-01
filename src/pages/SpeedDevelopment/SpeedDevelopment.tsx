@@ -66,7 +66,7 @@ const SpeedDevelopment = () => {
     if (isTestActive && timeRemaining > 0) {
       timerRef.current = setTimeout(() => {
         setTimeRemaining(prev => prev - 1);
-      }, 1000);
+      }, 1000) as unknown as number;
     } else if (timeRemaining === 0) {
       finishTest();
     }

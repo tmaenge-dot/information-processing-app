@@ -4,8 +4,8 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // Use relative base so assets load correctly when deployed to a subpath (GitHub Pages)
-  base: './',
+  // Use the GitHub Pages repository name as base for proper routing
+  base: '/typing-practice/',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',

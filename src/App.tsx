@@ -43,7 +43,7 @@ function App() {
         <ThemeProvider theme={theme}>
           <CssBaseline />
         <Router 
-          basename="/"
+          basename="/typing-practice"
           future={{
             v7_startTransition: true,
             v7_relativeSplatPath: true
