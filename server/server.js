@@ -121,7 +121,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 PayPal Backend Server running on port ${PORT}`);
   console.log(`📍 Frontend URL: ${process.env.FRONTEND_URL}`);
   console.log(`💳 PayPal Mode: ${process.env.PAYPAL_MODE || 'sandbox'}`);
