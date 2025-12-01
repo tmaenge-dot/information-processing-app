@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSubscription } from '../../hooks/useSubscription';
 import {
   Box,
@@ -51,6 +52,7 @@ interface Lesson {
 }
 
 const TypingPractice = () => {
+  const navigate = useNavigate();
   const { canUseFeature, getRemainingUsage, trackUsage, currentPlan } = useSubscription();
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [isTyping, setIsTyping] = useState(false);
@@ -1484,7 +1486,7 @@ FAULT FINDING & REPORTING
                 <Button 
                   variant="contained" 
                   size="small" 
-                  onClick={() => window.location.href = '/information-processing-app/pricing'}
+                  onClick={() => navigate('/pricing')}
                   sx={{ fontWeight: 'bold' }}
                 >
                   Upgrade Now
