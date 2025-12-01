@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   // Use the GitHub Pages repository name as base for proper routing
-  base: '/typing-practice/',
+  base: '/information-processing-app/',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
