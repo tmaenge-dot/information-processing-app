@@ -41,13 +41,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initAuth = () => {
       try {
-        const storedUser = localStorage.getItem('user');
-        const authToken = localStorage.getItem('authToken');
-        
-        if (storedUser && authToken) {
-          const userData = JSON.parse(storedUser);
-          setUser(userData);
-        }
+        // For demo purposes, always start logged out to show Sign In/Sign Up buttons
+        // Users can login with demo credentials: any email + password123/demo123/123456/password
+        setUser(null);
+        localStorage.removeItem('user');
+        localStorage.removeItem('authToken');
       } catch (error) {
         console.error('Auth initialization error:', error);
         localStorage.removeItem('user');

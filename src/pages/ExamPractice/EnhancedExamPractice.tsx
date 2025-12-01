@@ -323,7 +323,7 @@ const EnhancedExamPractice: React.FC = () => {
   const currentTaskData = currentExam?.tasks[currentTask];
 
   useEffect(() => {
-    let timer: number;
+    let timer: ReturnType<typeof setInterval>;
     if (examStarted && !examPaused && timeRemaining > 0) {
       timer = setInterval(() => {
         setTimeRemaining(prev => prev - 1);
