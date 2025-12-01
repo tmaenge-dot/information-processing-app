@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSubscription } from '../../hooks/useSubscription';
 import {
   Box,
   Paper,
@@ -308,6 +309,7 @@ Market share data sourced from TechAnalytics Research Q3 2024 Report`,
 ];
 
 const EnhancedExamPractice: React.FC = () => {
+  const { currentPlan } = useSubscription();
   const [selectedExam, setSelectedExam] = useState<number>(1);
   const [currentTask, setCurrentTask] = useState<number>(0);
   const [examStarted, setExamStarted] = useState<boolean>(false);
@@ -496,6 +498,47 @@ const EnhancedExamPractice: React.FC = () => {
 
   if (!currentExam || !currentTaskData) {
     return null;
+  }
+
+  // Check if user has access to exams (paid users only)
+  if (currentPlan.id === 'free') {
+    return (
+      <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
+        <Typography variant="h4" gutterBottom sx={{ mb: 1 }}>
+          📝 Enhanced Exam Practice
+        </Typography>
+        <Typography variant="body2" color="text.secondary" gutterBottom sx={{ mb: 4 }}>
+          Advanced exam simulation with multiple exam sets
+        </Typography>
+
+        <Paper 
+          elevation={3} 
+          sx={{ 
+            p: { xs: 3, md: 4 }, 
+            textAlign: 'center',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white'
+          }}
+        >
+          <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
+            🔒 Enhanced Exam Practice - Premium Feature
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 3, fontSize: '1.1rem' }}>
+            Enhanced exam practice is available for Premium and Professional plan subscribers only.
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 4, opacity: 0.9 }}>
+            👉 Visit "Pricing & Plans" in the sidebar to upgrade and access:
+          </Typography>
+          <Box sx={{ mb: 3, textAlign: 'left', maxWidth: 500, mx: 'auto' }}>
+            <Typography variant="body2" sx={{ mb: 1 }}>✅ Multiple exam sets to practice</Typography>
+            <Typography variant="body2" sx={{ mb: 1 }}>✅ Comprehensive task coverage</Typography>
+            <Typography variant="body2" sx={{ mb: 1 }}>✅ Advanced exam simulation</Typography>
+            <Typography variant="body2" sx={{ mb: 1 }}>✅ Task progress tracking</Typography>
+            <Typography variant="body2">✅ Unlimited practice sessions</Typography>
+          </Box>
+        </Paper>
+      </Box>
+    );
   }
 
   return (

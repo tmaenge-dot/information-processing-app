@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSubscription } from '../../hooks/useSubscription';
 import {
   Box,
   Typography,
@@ -40,6 +41,7 @@ interface ExamTask {
 }
 
 const ExamPractice = () => {
+  const { currentPlan } = useSubscription();
   const [currentTask, setCurrentTask] = useState(0);
   const [userInput, setUserInput] = useState('');
   const [isExamActive, setIsExamActive] = useState(false);
@@ -312,6 +314,49 @@ Date: 22 October 2025`,
   };
 
   const currentExamTask = examTasks[currentTask];
+
+  // Check if user has access to exams (paid users only)
+  if (currentPlan.id === 'free') {
+    return (
+      <Box sx={{ width: '100%' }}>
+        <Box mb={3}>
+          <Typography variant="h4" component="h1" gutterBottom sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
+            📝 Part I Exam Practice
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '0.9rem', md: '1rem' } }}>
+            National Certificate in Secretarial Studies - Official Exam Format
+          </Typography>
+        </Box>
+
+        <Paper 
+          elevation={3} 
+          sx={{ 
+            p: { xs: 3, md: 4 }, 
+            textAlign: 'center',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white'
+          }}
+        >
+          <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
+            🔒 Exam Practice - Premium Feature
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 3, fontSize: '1.1rem' }}>
+            Exam practice is available for Premium and Professional plan subscribers only.
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 4, opacity: 0.9 }}>
+            👉 Visit "Pricing & Plans" in the sidebar to upgrade and access:
+          </Typography>
+          <Box sx={{ mb: 3, textAlign: 'left', maxWidth: 500, mx: 'auto' }}>
+            <Typography variant="body2" sx={{ mb: 1 }}>✅ Part I Exam Practice (5 tasks)</Typography>
+            <Typography variant="body2" sx={{ mb: 1 }}>✅ Enhanced Exam Practice (multiple exam sets)</Typography>
+            <Typography variant="body2" sx={{ mb: 1 }}>✅ Timed exam simulations</Typography>
+            <Typography variant="body2" sx={{ mb: 1 }}>✅ Detailed feedback and scoring</Typography>
+            <Typography variant="body2">✅ Unlimited practice attempts</Typography>
+          </Box>
+        </Paper>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ width: '100%' }}>
