@@ -10,7 +10,7 @@ dotenv.config();
 function environment() {
   const clientId = process.env.PAYPAL_CLIENT_ID;
   const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
-  const mode = process.env.PAYPAL_MODE || 'sandbox';
+  const mode = (process.env.PAYPAL_MODE || 'sandbox').toLowerCase();
 
   if (!clientId || !clientSecret) {
     throw new Error('PayPal credentials not configured. Check your .env file.');

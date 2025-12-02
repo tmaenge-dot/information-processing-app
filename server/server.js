@@ -115,7 +115,7 @@ app.post('/api/orders/:orderID/capture', async (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    mode: process.env.PAYPAL_MODE || 'sandbox',
+    mode: (process.env.PAYPAL_MODE || 'sandbox').toLowerCase(),
     timestamp: new Date().toISOString()
   });
 });
