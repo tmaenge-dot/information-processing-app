@@ -28,5 +28,10 @@ export default defineConfig({
   preview: {
     port: 4173,
     host: true
+  },
+  define: {
+    // Expose production mode to the app
+    '__APP_VERSION__': JSON.stringify(process.env.npm_package_version || '1.0.0'),
+    '__BUILD_TIME__': JSON.stringify(new Date().toISOString())
   }
 })

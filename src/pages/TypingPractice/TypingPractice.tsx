@@ -1003,7 +1003,7 @@ FAULT FINDING & REPORTING
         const minutes = elapsed / 60;
         const currentWpm = minutes > 0 ? Math.round(wordsTyped / minutes) : 0;
         setWpm(currentWpm);
-      }, 100) as unknown as number;
+      }, 100);
     }
     
     return () => clearInterval(interval);

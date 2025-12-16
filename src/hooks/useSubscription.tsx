@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { SubscriptionPlan, UserSubscription, UsageStats, SUBSCRIPTION_PLANS } from '../types/subscription';
 import { useAuth } from './useAuth';
+import logger from '../utils/logger';
 
 interface SubscriptionContextType {
   currentPlan: SubscriptionPlan;
@@ -147,25 +148,32 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
   };
 
   const trackUsage = (feature: keyof UsageStats) => {
+    logger.debug('Tracking usage', 'Subscription', { feature });
     setUsageStats(prev => {
-      switch (feature) {
-        case 'lessonsCompleted':
-          return { ...prev, lessonsCompleted: prev.lessonsCompleted + 1 };
-        case 'speedTestsTaken':
-          return { ...prev, speedTestsTaken: prev.speedTestsTaken + 1 };
-        case 'practiceTimeMinutes':
-          return { ...prev, practiceTimeMinutes: prev.practiceTimeMinutes + 1 };
-        case 'assessmentAttempts':
-          return { ...prev, assessmentAttempts: prev.assessmentAttempts + 1 };
-        case 'aiQueriesUsed':
-          return { ...prev, aiQueriesUsed: prev.aiQueriesUsed + 1 };
-        default:
-          return prev;
-      }
+      const newStats = (() => {
+        switch (feature) {
+          case 'lessonsCompleted':
+            return { ...prev, lessonsCompleted: prev.lessonsCompleted + 1 };
+          case 'speedTestsTaken':
+            return { ...prev, speedTestsTaken: prev.speedTestsTaken + 1 };
+          case 'practiceTimeMinutes':
+            return { ...prev, practiceTimeMinutes: prev.practiceTimeMinutes + 1 };
+          case 'assessmentAttempts':
+            return { ...prev, assessmentAttempts: prev.assessmentAttempts + 1 };
+          case 'aiQueriesUsed':
+            return { ...prev, aiQueriesUsed: prev.aiQueriesUsed + 1 };
+          default:
+            return prev;
+        }
+      })();
+      
+      logger.event('usage_tracked', 'Subscription', { feature, newValue: newStats[feature] });
+      return newStats;
     });
   };
 
   const upgradePlan = (planId: string) => {
+    logger.info('Upgrading plan', 'Subscription', { planId });
     const plan = SUBSCRIPTION_PLANS.find(p => p.id === planId);
     if (plan) {
       setCurrentPlan(plan);
@@ -177,6 +185,19 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
         startDate: new Date(),
         endDate: new Date(Date.now() + (plan.period === 'yearly' ? 365 : 30) * 24 * 60 * 60 * 1000)
       });
+      
+      logger.info('Plan upgraded successfully', 'Subscription', { 
+        planId, 
+        planName: plan.name,
+        price: plan.price 
+      });
+      logger.event('plan_upgrade', 'Subscription', { 
+        planId, 
+        planName: plan.name,
+        price: plan.price 
+      });
+    } else {
+      logger.warn('Plan not found', 'Subscription', { planId });
     }
   };
 

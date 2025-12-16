@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import logger from '../utils/logger';
 
 interface User {
   id: string;
@@ -41,13 +42,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initAuth = () => {
       try {
+        logger.info('Initializing authentication', 'Auth');
         // For demo purposes, always start logged out to show Sign In/Sign Up buttons
         // Users can login with demo credentials: any email + password123/demo123/123456/password
         setUser(null);
         localStorage.removeItem('user');
         localStorage.removeItem('authToken');
+        logger.debug('Auth state reset for demo mode', 'Auth');
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        logger.error('Auth initialization error', 'Auth', error as Error);
         localStorage.removeItem('user');
         localStorage.removeItem('authToken');
       } finally {
@@ -60,6 +63,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
+      logger.info('Login attempt', 'Auth', { email });
       // Simulate API call - in production, this would call your backend
       await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -78,6 +82,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(adminUser));
         localStorage.setItem('authToken', 'admin-token-' + Date.now());
         
+        logger.info('Admin login successful', 'Auth', { userId: adminUser.id });
+        logger.event('user_login', 'Auth', { role: 'admin', email });
         return { success: true };
       }
 
@@ -99,6 +105,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(userObj));
         localStorage.setItem('authToken', 'user-token-' + Date.now());
         
+        logger.info('Registered user login successful', 'Auth', { userId: userObj.id });
+        logger.event('user_login', 'Auth', { role: 'user', email });
         return { success: true };
       }
 
@@ -120,17 +128,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(demoUser));
         localStorage.setItem('authToken', 'demo-token-' + Date.now());
         
+        logger.info('Demo user login successful', 'Auth', { userId: demoUser.id });
+        logger.event('user_login', 'Auth', { role: 'demo_user', email });
         return { success: true };
       }
 
+      logger.warn('Login failed - invalid credentials', 'Auth', { email });
       return { success: false, error: 'Invalid email or password. Try: password123, demo123, 123456, or password' };
     } catch (error) {
+      logger.error('Login error', 'Auth', error as Error, { email });
       return { success: false, error: 'Login failed. Please try again.' };
     }
   };
 
   const register = async (email: string, password: string, name: string): Promise<{ success: boolean; error?: string }> => {
     try {
+      logger.info('Registration attempt', 'Auth', { email, name });
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -139,6 +152,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const existingUser = registeredUsers.find((u: any) => u.email === email);
 
       if (existingUser) {
+        logger.warn('Registration failed - user already exists', 'Auth', { email });
         return { success: false, error: 'User with this email already exists' };
       }
 
@@ -170,13 +184,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(userObj));
       localStorage.setItem('authToken', 'user-token-' + Date.now());
 
+      logger.info('Registration successful', 'Auth', { userId: userObj.id });
+      logger.event('user_registration', 'Auth', { email, name });
       return { success: true };
     } catch (error) {
+      logger.error('Registration error', 'Auth', error as Error, { email });
       return { success: false, error: 'Registration failed. Please try again.' };
     }
   };
 
   const logout = () => {
+    logger.info('User logout', 'Auth', { userId: user?.id });
+    logger.event('user_logout', 'Auth', { userId: user?.id, email: user?.email });
     setUser(null);
     localStorage.removeItem('user');
     localStorage.removeItem('authToken');

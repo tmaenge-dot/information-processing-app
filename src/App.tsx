@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Box } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider } from './hooks/useAuth';
 import { SubscriptionProvider } from './hooks/useSubscription';
+import logger from './utils/logger';
 // import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'; // Not needed for main routes
 
 // Import critical components immediately (no lazy loading for better UX)
@@ -23,7 +24,9 @@ const AIAssistant = React.lazy(() => import('./pages/AIAssistant/AIAssistant'));
 const ExamPractice = React.lazy(() => import('./pages/ExamPractice/ExamPractice'));
 const EnhancedExamPractice = React.lazy(() => import('./pages/ExamPractice/EnhancedExamPractice'));
 const SignIn = React.lazy(() => import('./pages/Auth/SignIn'));
+
 const SignUp = React.lazy(() => import('./pages/Auth/SignUp'));
+import AdminDashboard from './pages/Admin/AdminDashboard';
 
 const theme = createTheme({
   palette: {
@@ -37,6 +40,54 @@ const theme = createTheme({
 });
 
 function App() {
+  useEffect(() => {
+    // Log application startup
+    logger.info('Application started', 'App', {
+      environment: import.meta.env.MODE,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent
+    });
+
+    // Log unhandled errors
+    const handleError = (event: ErrorEvent) => {
+      logger.critical('Unhandled error', 'App', event.error, {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno
+      });
+    };
+
+    // Log unhandled promise rejections
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      logger.critical('Unhandled promise rejection', 'App', 
+        event.reason instanceof Error ? event.reason : new Error(String(event.reason)), 
+        { reason: event.reason }
+      );
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleRejection);
+
+    // Log when app becomes visible/hidden
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        logger.debug('App hidden', 'App');
+      } else {
+        logger.debug('App visible', 'App');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleRejection);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      logger.info('Application unmounted', 'App');
+    };
+  }, []);
+
   return (
     <AuthProvider>
       <SubscriptionProvider>
@@ -96,6 +147,7 @@ function App() {
                     <Route path="/exam-practice" element={<ExamPractice />} />
                     <Route path="/enhanced-exam-practice" element={<EnhancedExamPractice />} />
                     <Route path="/pricing" element={<Pricing />} />
+                    <Route path="/admin-dashboard" element={<AdminDashboard />} />
                     <Route path="/sign-in" element={<SignIn />} />
                     <Route path="/sign-up" element={<SignUp />} />
                   </Routes>

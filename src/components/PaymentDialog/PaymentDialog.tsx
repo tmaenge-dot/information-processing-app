@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import logger from '../../utils/logger';
 import {
   Dialog,
   DialogTitle,
@@ -40,11 +41,28 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    if (open && plan) {
+      logger.event('payment_dialog_opened', 'Payment', {
+        planId: plan.id,
+        planName: plan.name,
+        price: plan.price,
+        period: plan.period
+      });
+    }
+  }, [open, plan]);
+
   // Create PayPal order
   const createOrder = async () => {
     if (!plan) return '';
 
     try {
+      logger.event('payment_order_initiated', 'Payment', {
+        planId: plan.id,
+        planName: plan.name,
+        price: plan.price,
+        period: plan.period
+      });
       const response = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
         headers: {
@@ -53,19 +71,31 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
         body: JSON.stringify({
           planId: plan.id,
           planName: plan.name,
-          amount: plan.price
+          amount: plan.price,
+          userId: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!).id : null
         }),
       });
 
       const data = await response.json();
       
       if (!response.ok) {
+        logger.event('payment_order_failed', 'Payment', {
+          planId: plan.id,
+          error: data.error
+        });
         throw new Error(data.error || 'Failed to create order');
       }
 
+      logger.event('payment_order_created', 'Payment', {
+        planId: plan.id,
+        orderId: data.id
+      });
       return data.id;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create order');
+      logger.error('Payment order creation failed', 'Payment', err instanceof Error ? err : undefined, {
+        planId: plan?.id
+      });
       throw err;
     }
   };
@@ -78,27 +108,43 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
     setError(null);
 
     try {
+      logger.event('payment_capture_initiated', 'Payment', {
+        planId: plan.id,
+        orderId: data.orderID
+      });
       const response = await fetch(`${API_URL}/api/orders/${data.orderID}/capture`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          userId: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!).id : null
+        })
       });
 
       const captureData = await response.json();
 
       if (!response.ok) {
+        logger.event('payment_capture_failed', 'Payment', {
+          planId: plan.id,
+          orderId: data.orderID,
+          error: captureData.error
+        });
         throw new Error(captureData.error || 'Failed to capture payment');
       }
 
-      console.log('Payment captured:', captureData);
-      
+      logger.event('payment_success', 'Payment', {
+        planId: plan.id,
+        orderId: data.orderID,
+        amount: captureData.amount,
+        currency: captureData.currency,
+        payerEmail: captureData.payer?.email,
+        payerName: captureData.payer?.name
+      });
       // Mark payment as successful
       setPaymentSuccess(true);
-      
       // Update user's subscription
       onPaymentComplete(plan.id);
-      
       // Close dialog after short delay
       setTimeout(() => {
         onClose();
@@ -108,18 +154,26 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment failed');
+      logger.error('Payment capture failed', 'Payment', err instanceof Error ? err : undefined, {
+        planId: plan?.id,
+        orderId: data?.orderID
+      });
       setIsProcessing(false);
     }
   };
 
   const onError = (err: any) => {
-    console.error('PayPal error:', err);
+    logger.event('payment_error', 'Payment', {
+      error: err?.message || String(err)
+    });
     setError('Payment failed. Please try again.');
     setIsProcessing(false);
   };
 
   const onCancel = () => {
-    console.log('Payment cancelled by user');
+    logger.event('payment_cancelled', 'Payment', {
+      planId: plan?.id
+    });
     setError(null);
   };
 

@@ -235,7 +235,7 @@ Date: 22 October 2025`,
           const totalElapsed = (Date.now() - examStartTime) / 1000;
           setTotalExamTime(totalElapsed);
         }
-      }, 1000) as unknown as number;
+      }, 1000);
     }
     
     return () => clearInterval(interval);
