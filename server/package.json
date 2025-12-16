@@ -1,6 +1,7 @@
 {
   "name": "information-processing-backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "Backend server for Information Processing App (Express, PayPal integration, analytics logging)",
   "main": "server.js",
   "scripts": {
